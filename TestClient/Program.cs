@@ -1,8 +1,8 @@
-﻿using System;
-using MinecraftOutClient.Modules;
-using System.Net.Sockets;
+﻿using MinecraftOutClient.Modules;
+using System;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 
 namespace TestClient
 {
@@ -11,41 +11,45 @@ namespace TestClient
         static void Main(string[] args)
         {
             while (true)
-            {   
-                StreamWriter sw = new StreamWriter(@".\Output.txt");
-                Console.SetOut(sw);
-                Console.Clear();
-				//读取python脚本生成的服务器地址
-                string ip = File.ReadLines(@".\service.txt").Skip(0).Take(1).First(); // 读取第一行的服务器地址
-                string portstring = File.ReadLines(@".\service.txt").Skip(1).Take(1).First(); // 读取第二行的端口
-				// 固化到程序内
-                // string ip = ""; // 这里设定服务器地址
-                // string portstring = ""; //设定服务器端口
+            {
+                FileStream fs = new FileStream("Output.txt", FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+                StreamWriter writer = new StreamWriter(fs);
+                //Console.SetOut(writer);
+                //Console.Clear();
+                //读取python脚本生成的服务器地址
+                string ip = File.ReadLines("service.txt").First(); // 读取第一行的服务器地址
+                string portstring = File.ReadLines("service.txt").Last(); // 读取第二行的端口
+                //Console.WriteLine(ip);
+                //Console.Write(portstring);
+                // 固化到程序内
+                //string ip = ""; // 这里设定服务器地址
+                //string portstring = ""; //设定服务器端口
                 int port;
                 port = int.Parse(portstring);
                 try
                 {
                     ServerInfo info = new ServerInfo(ip, port);
                     info.StartGetServerInfo();
-                    foreach (string item in info.OnlinePlayersName)
+                    if (info.OnlinePlayersName != null && info.OnlinePlayersName.Any())
                     {
-                        Console.WriteLine(item);
+                        foreach (var item in info.OnlinePlayersName)
+                        {
+                            writer.WriteLine(item);
+                        }
                     }
                 }
                 catch (SocketException ex)
                 {
-                    Console.WriteLine(ex.Message);
-                    Console.Write("连接发生异常。");
-                    continue;
+                    writer.WriteLine(ex.Message, "连接发生异常。");
+                    break;
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Console.WriteLine(ex);
-                    Console.Write("发生异常。");
-                    continue;
+                    writer.WriteLine("发生异常。");
+                    break;
                 }
-                sw.Flush();
-                sw.Close();
+                writer.Flush();
+                writer.Close();
                 break;
             }
         }
